@@ -5,18 +5,18 @@ from datetime import datetime
 # 1. 페이지 설정
 st.set_page_config(page_title="T호텔 당일정산시스템", layout="wide")
 
-# 2. 로고 디자인 (빨간 네모 삭제, 괄호 추가, 검정색 글자 변경)
+# 2. 로고 디자인 (괄호 추가, 검정색 굵은 글자 적용)
 st.markdown("""
     <div style='text-align: center; padding: 10px;'>
         <h1 style='color: #E74C3C; font-size: 100px; margin-bottom: 0px; font-family: "Arial Black", sans-serif;'>T</h1>
         <h2 style='color: #2C3E50; margin-top: -10px; letter-spacing: 10px; font-weight: bold;'>HOTEL</h2>
-        <h3 style='color: #000000; margin-top: 5px; font-weight: normal;'>(당일정산시스템)</h3>
+        <h3 style='color: #000000; margin-top: 5px; font-weight: bold; font-size: 28px;'>(당일정산시스템)</h3>
     </div>
     """, unsafe_allow_html=True)
 
 st.divider()
 
-# --- 세션 상태 초기화 (사장님 원본 코드 100% 동일) ---
+# --- 세션 상태 초기화 (사장님 원본 코드 유지) ---
 if 'logs' not in st.session_state:
     st.session_state.logs = []
 
@@ -82,7 +82,6 @@ if st.session_state.logs or staying_qty > 0:
         return "카드" if channel in ["현장카드", "카드"] else "현금"
     df['pay_group'] = df['channel'].apply(classify_pay_group)
 
-    # 기본 통계 계산
     acc_cash_sum = df[(df['type'] == '숙박') & (df['pay_group'] == '현금')]['price'].sum()
     acc_card_sum = df[(df['type'] == '숙박') & (df['pay_group'] == '카드')]['price'].sum()
     rent_cash_sum = df[(df['type'] == '대실/기타') & (df['pay_group'] == '현금')]['price'].sum()
@@ -115,7 +114,7 @@ if st.session_state.logs or staying_qty > 0:
     c3_1.info(f"**미수금 합계** (OTA+이체)\n\n### {receivable:,} 원")
     c3_2.success(f"**입금 합계** (현장현금)\n\n### {deposit:,} 원")
 
-    # [표 4] - 사장님 요청 합계 추가 버전 유지
+    # [표 4]
     st.markdown("---")
     st.markdown("#### [표 4] 가격별 상세 분류")
     
