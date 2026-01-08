@@ -1,17 +1,17 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime  # <-- 이 줄이 빠져서 에러가 났던 겁니다!
+from datetime import datetime
 
 # 1. 페이지 설정
 st.set_page_config(page_title="T호텔 당일정산시스템", layout="wide")
 
-# 2. T호텔 로고 및 상단 디자인
+# 2. T호텔 로고 및 상단 디자인 (박스 색상 변경 및 중앙 정렬 반영)
 st.markdown("""
     <div style='text-align: center; padding: 20px; border: 2px solid #f0f2f6; border-radius: 15px; background-color: #ffffff;'>
-        <h1 style='color: #E74C3C; font-size: 80px; margin-bottom: 0px; font-family: "Arial Black", sans-serif;'>T</h1>
+        <h1 style='color: #E74C3C; font-size: 100px; margin-bottom: 0px; font-family: "Arial Black", sans-serif;'>T</h1>
         <h2 style='color: #2C3E50; margin-top: -10px; letter-spacing: 10px; font-weight: bold;'>HOTEL</h2>
-        <div style='background-color: #2C3E50; color: white; padding: 10px; border-radius: 5px; display: inline-block; margin-top: 10px;'>
-            <h3 style='margin: 0; letter-spacing: 2px;'>당일정산시스템</h3>
+        <div style='background-color: #E74C3C; color: white; padding: 12px 30px; border-radius: 8px; display: inline-block; margin-top: 10px; min-width: 250px;'>
+            <h3 style='margin: 0; letter-spacing: 3px; text-align: center; font-weight: bold;'>당일정산시스템</h3>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -31,7 +31,7 @@ with col_status:
 
 st.markdown("---")
 
-# --- 2. 입력 메뉴 ---
+# --- 2. 데이터 입력 섹션 ---
 st.subheader("📝 데이터 입력")
 input_col1, input_col2 = st.columns(2)
 
@@ -95,7 +95,8 @@ if st.session_state.logs or staying_qty > 0:
     st.markdown("---")
     st.subheader("📊 정산 리포트")
 
-    # [표 1]
+    # [표 1] 매출 종합 집계
+    st.markdown("#### [표 1] 매출 종합 집계")
     total_acc = acc_cash_sum + acc_card_sum
     total_rent = rent_cash_sum + rent_card_sum
     table1_data = {
@@ -107,17 +108,18 @@ if st.session_state.logs or staying_qty > 0:
     }
     st.dataframe(pd.DataFrame(table1_data).style.format({"합계 (Total)": "{:,} 원", "현금 (현금+이체+OTA)": "{:,} 원", "카드 (Card)": "{:,} 원"}), use_container_width=True, hide_index=True)
 
-    # [표 2]
+    # [표 2] 채널 및 이체 상세
+    st.markdown("#### [표 2] 채널 및 이체 상세")
     t2_cats = ["트립닷컴", "아고다", "여기어때", "계좌이체"]
     table2_data = [{"분류": c, "개수": f"{len(df[df['channel']==c])} 건", "합계": df[df['channel']==c]['price'].sum()} for c in t2_cats]
     st.dataframe(pd.DataFrame(table2_data).style.format({"합계": "{:,} 원"}), use_container_width=True, hide_index=True)
 
-    # [표 3]
+    # [표 3] 자금 흐름 현황
     c3_1, c3_2 = st.columns(2)
     c3_1.info(f"**미수금 합계** (OTA+이체)\n\n### {receivable:,} 원")
     c3_2.success(f"**입금 합계** (현장현금)\n\n### {deposit:,} 원")
 
-    # [표 4] 합계 행 추가 버전
+    # [표 4] 가격별 상세 분류 (합계 추가 버전)
     st.markdown("---")
     st.markdown("#### [표 4] 가격별 상세 분류")
     
