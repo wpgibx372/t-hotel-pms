@@ -5,22 +5,44 @@ from datetime import datetime
 # 1. 페이지 설정
 st.set_page_config(page_title="T호텔 당일정산시스템", layout="wide")
 
-# 2. T호텔 로고 및 상단 디자인 (빨간색 박스 중앙 정렬 수정)
+# 2. T호텔 로고 및 상단 디자인 (데스크탑 중앙 정렬 최적화)
 st.markdown("""
-    <div style='text-align: center; padding: 20px; border: 2px solid #f0f2f6; border-radius: 15px; background-color: #ffffff;'>
-        <h1 style='color: #E74C3C; font-size: 100px; margin-bottom: 0px; font-family: "Arial Black", sans-serif;'>T</h1>
-        <h2 style='color: #2C3E50; margin-top: -10px; letter-spacing: 10px; font-weight: bold;'>HOTEL</h2>
-        <div style='display: flex; justify-content: center; margin-top: 15px;'>
-            <div style='background-color: #E74C3C; color: white; padding: 12px 40px; border-radius: 8px; min-width: 280px;'>
-                <h3 style='margin: 0; letter-spacing: 3px; font-weight: bold; text-align: center;'>당일정산시스템</h3>
-            </div>
+    <style>
+        .main-header {
+            text-align: center;
+            padding: 30px;
+            border: 2px solid #f0f2f6;
+            border-radius: 15px;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .red-box {
+            background-color: #E74C3C;
+            color: white;
+            padding: 15px 50px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 15px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+    </style>
+    <div class="main-header">
+        <h1 style='color: #E74C3C; font-size: 110px; margin: 0; font-family: "Arial Black", sans-serif; line-height: 1;'>T</h1>
+        <h2 style='color: #2C3E50; margin: 10px 0; letter-spacing: 15px; font-weight: bold; line-height: 1; text-indent: 15px;'>HOTEL</h2>
+        <div class="red-box">
+            <h3 style='margin: 0; letter-spacing: 5px; color: white; font-size: 24px;'>당일정산시스템</h3>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 st.divider()
 
-# --- 세션 상태 초기화 (사장님 원본 유지) ---
+# --- 세션 상태 초기화 ---
 if 'logs' not in st.session_state:
     st.session_state.logs = []
 
@@ -86,7 +108,6 @@ if st.session_state.logs or staying_qty > 0:
         return "카드" if channel in ["현장카드", "카드"] else "현금"
     df['pay_group'] = df['channel'].apply(classify_pay_group)
 
-    # 기본 통계 계산
     acc_cash_sum = df[(df['type'] == '숙박') & (df['pay_group'] == '현금')]['price'].sum()
     acc_card_sum = df[(df['type'] == '숙박') & (df['pay_group'] == '카드')]['price'].sum()
     rent_cash_sum = df[(df['type'] == '대실/기타') & (df['pay_group'] == '현금')]['price'].sum()
@@ -137,13 +158,11 @@ if st.session_state.logs or staying_qty > 0:
             st.markdown(f"**숙박 - {pg}**")
             res = make_price_table_with_sum("숙박", pg)
             if res is not None: st.dataframe(res.style.format({"가격": lambda x: f"{x:,}" if isinstance(x, (int, float)) else x, "가격합": "{:,}"}), hide_index=True, use_container_width=True)
-            else: st.text("데이터 없음")
     with col4_2:
         for pg in ["현금", "카드"]:
             st.markdown(f"**대실 - {pg}**")
             res = make_price_table_with_sum("대실/기타", pg)
             if res is not None: st.dataframe(res.style.format({"가격": lambda x: f"{x:,}" if isinstance(x, (int, float)) else x, "가격합": "{:,}"}), hide_index=True, use_container_width=True)
-            else: st.text("데이터 없음")
 
     with st.expander("📋 데이터 초기화"):
         if st.button("데이터 전체 초기화"):
