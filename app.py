@@ -5,7 +5,7 @@ from datetime import datetime
 # 1. 페이지 설정
 st.set_page_config(page_title="T호텔 당일정산시스템", layout="wide")
 
-# 2. 로고 디자인 (괄호 추가, 검정색 굵은 글자 적용)
+# 2. 로고 디자인
 st.markdown("""
     <div style='text-align: center; padding: 10px;'>
         <h1 style='color: #E74C3C; font-size: 100px; margin-bottom: 0px; font-family: "Arial Black", sans-serif;'>T</h1>
@@ -16,7 +16,7 @@ st.markdown("""
 
 st.divider()
 
-# --- 세션 상태 초기화 (사장님 원본 코드 유지) ---
+# --- 세션 상태 초기화 ---
 if 'logs' not in st.session_state:
     st.session_state.logs = []
 
@@ -45,7 +45,7 @@ with input_col1:
             acc_price = st.number_input("가격", min_value=0, step=1000, key="acc_price")
         acc_submit = st.form_submit_button("숙박 등록", use_container_width=True)
         if acc_submit:
-            st.session_state.logs.append({"type": "숙박", "channel": acc_channel, "room": acc_room, "price": acc_price, "note": "숙박"})
+            st.session_state.logs.append({"type": "숙박", "channel": acc_channel, "room": acc_room, "price": int(acc_price), "note": "숙박"})
             st.rerun()
 
 with input_col2:
@@ -61,7 +61,7 @@ with input_col2:
             rent_price = st.number_input("가격", min_value=0, step=1000, key="rent_price")
         rent_submit = st.form_submit_button("대실/기타 등록", use_container_width=True)
         if rent_submit:
-            st.session_state.logs.append({"type": "대실/기타", "channel": rent_channel, "room": rent_room, "price": rent_price, "note": rent_note})
+            st.session_state.logs.append({"type": "대실/기타", "channel": rent_channel, "room": rent_room, "price": int(rent_price), "note": rent_note})
             st.rerun()
 
 # --- 데이터 처리 및 출력 섹션 ---
@@ -92,7 +92,8 @@ if st.session_state.logs or staying_qty > 0:
     st.markdown("---")
     st.subheader("📊 정산 리포트")
 
-    # [표 1]
+    # [표 1] - 천단위 콤마 및 소수점 제거
+    st.markdown("#### [표 1] 매출 종합 집계")
     total_acc = acc_cash_sum + acc_card_sum
     total_rent = rent_cash_sum + rent_card_sum
     table1_data = {
@@ -102,19 +103,23 @@ if st.session_state.logs or staying_qty > 0:
         "현금 (현금+이체+OTA)": [acc_cash_sum + rent_cash_sum, acc_cash_sum, rent_cash_sum],
         "카드 (Card)": [acc_card_sum + rent_card_sum, acc_card_sum, rent_card_sum]
     }
-    st.dataframe(pd.DataFrame(table1_data).style.format({"합계 (Total)": "{:,} 원", "현금 (현금+이체+OTA)": "{:,} 원", "카드 (Card)": "{:,} 원"}), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(table1_data).style.format({
+        "합계 (Total)": "{:,.0f} 원", 
+        "현금 (현금+이체+OTA)": "{:,.0f} 원", 
+        "카드 (Card)": "{:,.0f} 원"
+    }), use_container_width=True, hide_index=True)
 
     # [표 2]
     t2_cats = ["트립닷컴", "아고다", "여기어때", "계좌이체"]
     table2_data = [{"분류": c, "개수": f"{len(df[df['channel']==c])} 건", "합계": df[df['channel']==c]['price'].sum()} for c in t2_cats]
-    st.dataframe(pd.DataFrame(table2_data).style.format({"합계": "{:,} 원"}), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(table2_data).style.format({"합계": "{:,.0f} 원"}), use_container_width=True, hide_index=True)
 
     # [표 3]
     c3_1, c3_2 = st.columns(2)
-    c3_1.info(f"**미수금 합계** (OTA+이체)\n\n### {receivable:,} 원")
-    c3_2.success(f"**입금 합계** (현장현금)\n\n### {deposit:,} 원")
+    c3_1.info(f"**미수금 합계** (OTA+이체)\n\n### {int(receivable):,} 원")
+    c3_2.success(f"**입금 합계** (현장현금)\n\n### {int(deposit):,} 원")
 
-    # [표 4]
+    # [표 4] - 소수점 강제 제거 핵심 수정 부분
     st.markdown("---")
     st.markdown("#### [표 4] 가격별 상세 분류")
     
@@ -131,12 +136,21 @@ if st.session_state.logs or staying_qty > 0:
         for pg in ["현금", "카드"]:
             st.markdown(f"**숙박 - {pg}**")
             res = make_price_table_with_sum("숙박", pg)
-            if res is not None: st.dataframe(res.style.format({"가격": lambda x: f"{x:,}" if isinstance(x, (int, float)) else x, "가격합": "{:,}"}), hide_index=True, use_container_width=True)
+            if res is not None: 
+                # 여기서 {:,.0f} 를 사용하여 소수점 아래를 완전히 없앱니다.
+                st.dataframe(res.style.format({
+                    "가격": lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x, 
+                    "가격합": "{:,.0f}"
+                }), hide_index=True, use_container_width=True)
     with col4_2:
         for pg in ["현금", "카드"]:
             st.markdown(f"**대실 - {pg}**")
             res = make_price_table_with_sum("대실/기타", pg)
-            if res is not None: st.dataframe(res.style.format({"가격": lambda x: f"{x:,}" if isinstance(x, (int, float)) else x, "가격합": "{:,}"}), hide_index=True, use_container_width=True)
+            if res is not None: 
+                st.dataframe(res.style.format({
+                    "가격": lambda x: f"{x:,.0f}" if isinstance(x, (int, float)) else x, 
+                    "가격합": "{:,.0f}"
+                }), hide_index=True, use_container_width=True)
 
     with st.expander("📋 데이터 초기화"):
         if st.button("데이터 전체 초기화"):
