@@ -5,47 +5,37 @@ from datetime import datetime
 # 1. 페이지 설정
 st.set_page_config(page_title="T호텔 당일정산시스템", layout="wide")
 
-# 2. [핵심] Streamlit의 기본 왼쪽 정렬을 강제로 중앙으로 맞추는 CSS
+# 2. T호텔 로고 및 상단 디자인 (데스크탑 중앙 정렬 최적화)
 st.markdown("""
     <style>
-        /* 메인 컨테이너 중앙 정렬 */
-        .block-container {
+        .main-header {
+            text-align: center;
+            padding: 30px;
+            border: 2px solid #f0f2f6;
+            border-radius: 15px;
+            background-color: #ffffff;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-        }
-        /* 로고 박스 스타일 */
-        .main-header {
-            text-align: center;
-            padding: 30px;
-            width: 100%;
-            max-width: 800px; /* 데스크탑에서 너무 퍼지지 않게 조절 */
-            border: 2px solid #f0f2f6;
-            border-radius: 15px;
-            background-color: #ffffff;
             margin-bottom: 20px;
         }
         .red-box {
             background-color: #E74C3C;
             color: white;
-            padding: 15px 40px;
+            padding: 15px 50px;
             border-radius: 10px;
             display: inline-block;
             margin-top: 15px;
             font-weight: bold;
-        }
-        /* 입력 폼 등 다른 요소들도 중앙 정렬 유지 */
-        .stForm, .stTable, .stDataFrame {
-            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
     </style>
-    
     <div class="main-header">
-        <h1 style='color: #E74C3C; font-size: 100px; margin: 0; font-family: "Arial Black", sans-serif; line-height: 1;'>T</h1>
+        <h1 style='color: #E74C3C; font-size: 110px; margin: 0; font-family: "Arial Black", sans-serif; line-height: 1;'>T</h1>
         <h2 style='color: #2C3E50; margin: 10px 0; letter-spacing: 15px; font-weight: bold; line-height: 1; text-indent: 15px;'>HOTEL</h2>
         <div class="red-box">
-            <h3 style='margin: 0; letter-spacing: 5px; color: white; font-size: 24px; text-align: center;'>당일정산시스템</h3>
+            <h3 style='margin: 0; letter-spacing: 5px; color: white; font-size: 24px;'>당일정산시스템</h3>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -56,57 +46,52 @@ st.divider()
 if 'logs' not in st.session_state:
     st.session_state.logs = []
 
-# --- 1. 헤더 및 숙박중 수동 입력 (중앙 정렬을 위해 컬럼 비율 조정) ---
-col_empty1, col_content, col_empty2 = st.columns([1, 4, 1])
-with col_content:
-    col_header, col_status = st.columns([3, 1])
-    with col_header:
-        st.subheader("🛎️ 실시간 객실 현황")
-    with col_status:
-        staying_qty = st.number_input("현재 숙박중 (객실 수)", min_value=0, step=1, value=0, key="staying_manual_input")
+# --- 1. 헤더 및 숙박중 수동 입력 ---
+col_header, col_status = st.columns([3, 1])
+with col_header:
+    st.subheader("🛎️ 실시간 객실 현황")
+with col_status:
+    staying_qty = st.number_input("현재 숙박중 (객실 수)", min_value=0, step=1, value=0, key="staying_manual_input")
 
 st.markdown("---")
 
-# --- 2. 데이터 입력 섹션 (중앙 집중형 배치) ---
-col_input_left, col_input_main, col_input_right = st.columns([0.1, 5, 0.1])
-with col_input_main:
-    st.subheader("📝 데이터 입력")
-    input_col1, input_col2 = st.columns(2)
+# --- 2. 데이터 입력 섹션 ---
+st.subheader("📝 데이터 입력")
+input_col1, input_col2 = st.columns(2)
 
-    with input_col1:
-        with st.form("acc_form", clear_on_submit=True):
-            st.markdown("### 🛏️ 숙박 입력")
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                acc_channel = st.selectbox("채널", ["트립닷컴", "아고다", "여기어때", "현장현금", "현장카드", "계좌이체"])
-            with c2:
-                acc_room = st.text_input("객실호수", key="acc_room")
-            with c3:
-                acc_price = st.number_input("가격", min_value=0, step=1000, key="acc_price")
-            acc_submit = st.form_submit_button("숙박 등록", use_container_width=True)
-            if acc_submit:
-                st.session_state.logs.append({"type": "숙박", "channel": acc_channel, "room": acc_room, "price": acc_price, "note": "숙박"})
-                st.rerun()
+with input_col1:
+    with st.form("acc_form", clear_on_submit=True):
+        st.markdown("### 🛏️ 숙박 입력")
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            acc_channel = st.selectbox("채널", ["트립닷컴", "아고다", "여기어때", "현장현금", "현장카드", "계좌이체"])
+        with c2:
+            acc_room = st.text_input("객실호수", key="acc_room")
+        with c3:
+            acc_price = st.number_input("가격", min_value=0, step=1000, key="acc_price")
+        acc_submit = st.form_submit_button("숙박 등록", use_container_width=True)
+        if acc_submit:
+            st.session_state.logs.append({"type": "숙박", "channel": acc_channel, "room": acc_room, "price": acc_price, "note": "숙박"})
+            st.rerun()
 
-    with input_col2:
-        with st.form("rent_form", clear_on_submit=True):
-            st.markdown("### ⏳ 대실/기타 입력")
-            r1, r2, r3 = st.columns(3)
-            with r1:
-                rent_channel = st.selectbox("채널", ["현금", "카드", "계좌이체"])
-            with r2:
-                rent_room = st.text_input("객실호수", key="rent_room")
-            with r3:
-                rent_note = st.selectbox("비고", ["대실", "일품", "세탁", "주차"])
-                rent_price = st.number_input("가격", min_value=0, step=1000, key="rent_price")
-            rent_submit = st.form_submit_button("대실/기타 등록", use_container_width=True)
-            if rent_submit:
-                st.session_state.logs.append({"type": "대실/기타", "channel": rent_channel, "room": rent_room, "price": rent_price, "note": rent_note})
-                st.rerun()
+with input_col2:
+    with st.form("rent_form", clear_on_submit=True):
+        st.markdown("### ⏳ 대실/기타 입력")
+        r1, r2, r3 = st.columns(3)
+        with r1:
+            rent_channel = st.selectbox("채널", ["현금", "카드", "계좌이체"])
+        with r2:
+            rent_room = st.text_input("객실호수", key="rent_room")
+        with r3:
+            rent_note = st.selectbox("비고", ["대실", "일품", "세탁", "주차"])
+            rent_price = st.number_input("가격", min_value=0, step=1000, key="rent_price")
+        rent_submit = st.form_submit_button("대실/기타 등록", use_container_width=True)
+        if rent_submit:
+            st.session_state.logs.append({"type": "대실/기타", "channel": rent_channel, "room": rent_room, "price": rent_price, "note": rent_note})
+            st.rerun()
 
 # --- 데이터 처리 및 출력 섹션 ---
 if st.session_state.logs or staying_qty > 0:
-    # (데이터 처리 로직은 사장님 원본과 동일하게 유지)
     if st.session_state.logs:
         df_real = pd.DataFrame(st.session_state.logs)
     else:
@@ -123,7 +108,6 @@ if st.session_state.logs or staying_qty > 0:
         return "카드" if channel in ["현장카드", "카드"] else "현금"
     df['pay_group'] = df['channel'].apply(classify_pay_group)
 
-    # ... [생략된 통계 계산 로직은 동일하게 작동합니다] ...
     acc_cash_sum = df[(df['type'] == '숙박') & (df['pay_group'] == '현금')]['price'].sum()
     acc_card_sum = df[(df['type'] == '숙박') & (df['pay_group'] == '카드')]['price'].sum()
     rent_cash_sum = df[(df['type'] == '대실/기타') & (df['pay_group'] == '현금')]['price'].sum()
@@ -134,7 +118,7 @@ if st.session_state.logs or staying_qty > 0:
     st.markdown("---")
     st.subheader("📊 정산 리포트")
 
-    # 표 1, 2, 3 출력 (사장님 원본 스타일 유지)
+    # [표 1]
     total_acc = acc_cash_sum + acc_card_sum
     total_rent = rent_cash_sum + rent_card_sum
     table1_data = {
@@ -146,7 +130,17 @@ if st.session_state.logs or staying_qty > 0:
     }
     st.dataframe(pd.DataFrame(table1_data).style.format({"합계 (Total)": "{:,} 원", "현금 (현금+이체+OTA)": "{:,} 원", "카드 (Card)": "{:,} 원"}), use_container_width=True, hide_index=True)
 
-    # 표 4 (합계 행 추가 버전)
+    # [표 2]
+    t2_cats = ["트립닷컴", "아고다", "여기어때", "계좌이체"]
+    table2_data = [{"분류": c, "개수": f"{len(df[df['channel']==c])} 건", "합계": df[df['channel']==c]['price'].sum()} for c in t2_cats]
+    st.dataframe(pd.DataFrame(table2_data).style.format({"합계": "{:,} 원"}), use_container_width=True, hide_index=True)
+
+    # [표 3]
+    c3_1, c3_2 = st.columns(2)
+    c3_1.info(f"**미수금 합계** (OTA+이체)\n\n### {receivable:,} 원")
+    c3_2.success(f"**입금 합계** (현장현금)\n\n### {deposit:,} 원")
+
+    # [표 4]
     st.markdown("---")
     st.markdown("#### [표 4] 가격별 상세 분류")
     
